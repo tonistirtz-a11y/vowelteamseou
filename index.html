@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Float the Boat</title>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1b1b2f;--sea:#2d8fd5;--sea2:#5fb6ef;--sand:#ffe7a8;--gold:#ffc83d;--green:#2fb86b;--red:#e2544f;--purple:#6c4ad0;--bg:#eaf6ff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{font-family:'Comic Neue','Comic Sans MS','Chalkboard SE',sans-serif;background:var(--bg);color:var(--ink);font-size:20px;min-height:100vh}
+.wrap{max-width:860px;margin:0 auto;padding:12px 16px 24px}
+.screen{display:none}.screen.active{display:block}
+.title{background:#000;color:#fff;text-align:center;border-radius:12px;padding:14px 10px;margin-bottom:12px}
+.title h1{margin:0;font-size:2em}
+.title small{display:block;font-size:.8em;opacity:.85;margin-top:2px}
+.card{background:#fff;border:3px solid var(--ink);border-radius:16px;padding:16px;margin-bottom:12px}
+.btn{font-family:inherit;font-weight:700;font-size:1em;border:3px solid var(--ink);background:var(--gold);color:var(--ink);border-radius:14px;padding:12px 18px;min-height:52px;cursor:pointer;box-shadow:0 4px 0 var(--ink)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.btn.blue{background:var(--sea);color:#fff}
+.btn.small{padding:6px 12px;min-height:44px;font-size:.85em}
+.btn.on{background:var(--purple);color:#fff}
+.go{display:block;width:100%;font-size:1.4em;margin-top:8px}
+/* track */
+.track{position:relative;height:86px;border:3px solid var(--ink);border-radius:16px;overflow:hidden;
+  background:repeating-linear-gradient(90deg,var(--sea) 0 30px,var(--sea2) 30px 60px);background-size:120px 100%;animation:waves 3s linear infinite;margin-bottom:10px}
+@keyframes waves{to{background-position:120px 0}}
+.island{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:46px}
+.boat{position:absolute;left:4px;top:50%;font-size:50px;transform:translateY(-50%) scaleX(-1);transition:left .8s cubic-bezier(.3,1.4,.6,1)}
+.boat.bob{animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-58%) scaleX(-1) rotate(-4deg)}}
+.hud{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.pill{background:#fff;border:3px solid var(--ink);border-radius:999px;padding:5px 14px;font-weight:700}
+.spacer{flex:1}
+.tag{display:inline-block;background:var(--purple);color:#fff;border-radius:999px;padding:3px 14px;font-weight:700;font-size:.85em;margin-bottom:8px}
+.sent{font-size:2em;line-height:1.6;text-align:center;font-weight:700;margin:6px 0 4px}
+.blank{display:inline-block;min-width:3.4em;border-bottom:4px solid var(--ink);margin:0 4px;color:var(--green)}
+.showsounds .u{text-decoration:underline;text-decoration-thickness:4px;text-underline-offset:7px;text-decoration-color:var(--red)}
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.choices.two{grid-template-columns:repeat(2,1fr)}
+.choice{font-family:inherit;font-size:1.8em;font-weight:700;background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:16px;padding:16px 6px;min-height:84px;cursor:pointer;box-shadow:0 4px 0 var(--ink)}
+.choice:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.choice.right{background:var(--green);color:#fff}
+.choice.wrong{background:#ddd;color:#888;text-decoration:line-through;box-shadow:none}
+.fb{min-height:2.4em;text-align:center;font-weight:700;font-size:1.05em;margin-top:12px}
+.fb.good{color:#14783f}.fb.bad{color:#b3322d}
+.center{text-align:center}
+.readit{background:var(--sand);border:3px dashed var(--ink);border-radius:12px;padding:8px 12px;margin-top:10px;text-align:center;font-weight:700}
+.overlay{position:fixed;inset:0;background:rgba(27,27,47,.88);display:none;align-items:center;justify-content:center;padding:20px;z-index:10}
+.overlay.active{display:flex}
+.overlay .card{max-width:520px;text-align:center}
+.timer{font-size:3em;font-weight:700;color:var(--purple)}
+.stars{font-size:2.6em;letter-spacing:6px}
+.pop{position:fixed;pointer-events:none;font-size:34px;z-index:20;animation:pop 1s ease-out forwards}
+@keyframes pop{to{transform:translate(var(--dx),var(--dy)) rotate(200deg);opacity:0}}
+@media(max-width:560px){.sent{font-size:1.5em}.choice{font-size:1.4em;min-height:72px}.choices{grid-template-columns:1fr}.choices.two{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- MENU -->
+<div id="menu" class="screen active">
+  <div class="title"><h1>&#9973; Float the Boat</h1><small>Unit 3 Sentence Race</small></div>
+  <div class="card">
+    <p style="margin-top:0"><b>How to play:</b> Read each sentence out loud. Pick the word that fits, or decide if the sentence is <b>Silly</b> or if it <b>Makes Sense</b>. Every right answer sails your boat closer to the island!</p>
+    <p>Get it right on the first try for a &#11088; bonus. There's a brain break halfway.</p>
+    <button class="btn blue go" onclick="startGame()">Set Sail! &#9973;</button>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+  <div class="hud">
+    <button class="btn small" onclick="toMenu()">&larr; Menu</button>
+    <div class="pill">&#11088; <span id="score">0</span></div>
+    <div class="pill">&#128293; <span id="streak">0</span></div>
+    <div class="spacer"></div>
+    <button class="btn small" id="soundsBtn" onclick="toggleSounds()">Show sounds</button>
+  </div>
+  <div class="track"><div class="island">&#127965;&#65039;</div><div class="boat bob" id="boat">&#9973;</div></div>
+  <div class="card" id="stage"></div>
+  <div class="fb" id="fb"></div>
+  <div class="center"><button class="btn blue" id="nextBtn" style="display:none;font-size:1.2em" onclick="next()">Next &#9654;</button></div>
+</div>
+
+<!-- END -->
+<div id="end" class="screen">
+  <div class="title"><h1>&#127965;&#65039; Land ho!</h1><small>You sailed to the island!</small></div>
+  <div class="card center">
+    <div class="stars" id="endStars"></div>
+    <p id="endMsg" style="font-size:1.15em"></p>
+    <button class="btn blue" onclick="startGame()">Sail again</button>
+    <button class="btn" onclick="toMenu()">Menu</button>
+  </div>
+</div>
+</div>
+
+<!-- BRAIN BREAK -->
+<div id="brk" class="overlay">
+  <div class="card">
+    <h2 style="margin-top:0">&#129504; Brain Break!</h2>
+    <p id="brkText" style="font-size:1.25em"></p>
+    <div class="timer" id="brkTimer">20</div>
+    <button class="btn blue" onclick="endBreak()">Back to the boat!</button>
+  </div>
+</div>
+
+<script>
+/* Words in [brackets] are the Unit 3 spellings (underlined when "Show sounds" is on).
+   Patterns: ea, ee, ey, ie, y, e, e-e  |  oa, ow, o-e, oe, o, ough  |  ou, ow (cow). */
+var FILL = [
+  {s:'The g[oa]t ran d[ow]n the ___.', c:['r[oa]d','s[ee]d','cl[ou]d']},
+  {s:'We swim at the ___.', c:['b[ea]ch','t[oa]st','c[ow]']},
+  {s:'Mom put jam on the ___.', c:['t[oa]st','sh[ee]p','[ou]t']},
+  {s:'The ___ has a thick c[oa]t.', c:['sh[ee]p','k[ey]','r[oa]d']},
+  {s:'A big black ___ hid the sun.', c:['cl[ou]d','t[oe]','ch[ee]k']},
+  {s:'I n[ee]d a ___ to get in.', c:['k[ey]','t[oe]','s[ea]']},
+  {s:'The ___ can fl[oa]t on the s[ea].', c:['b[oa]t','c[ow]','r[oa]d']},
+  {s:'Let the ___ [ea]t the grass.', c:['c[ow]','s[oa]p','b[ea]ch']},
+  {s:'Scrub with ___ in the tub.', c:['s[oa]p','s[ee]d','cl[ou]d']},
+  {s:'Plant the ___ in the mud.', c:['s[ee]d','c[oa]t','k[ey]']},
+  {s:'I hit my ___ on a rock.', c:['t[oe]','sh[ow]','s[ea]']},
+  {s:'Scrub the desk to get it ___.', c:['cl[ea]n','r[ou]nd','sl[ow]']},
+  {s:'The pup is so ___ it jumps and yips.', c:['happ[y]','r[ou]nd','cl[ea]n']},
+  {s:'Do not run. G[o] ___.', c:['sl[ow]','sw[ee]t','gr[ee]n']}
+];
+var SILLY = [
+  {s:'A t[oa]d can fl[oa]t on a cl[ou]d.', ok:false},
+  {s:'The sh[ee]p sl[ee]ps on the gr[ee]n grass.', ok:true},
+  {s:'A c[ow] can [ea]t a r[oa]d.', ok:false},
+  {s:'We n[ee]d a c[oa]t in the sn[ow].', ok:true},
+  {s:'Fish swim in the s[ea].', ok:true},
+  {s:'I can nap on a bit of t[oa]st.', ok:false},
+  {s:'Gr[ee]n b[ea]ns gr[ow] from s[ee]ds.', ok:true},
+  {s:'My t[oe] can sh[ou]t.', ok:false},
+  {s:'The ch[ie]f led the t[ea]m.', ok:true},
+  {s:'A s[ea]l can r[ea]d a n[o]t[e].', ok:false},
+  {s:'Th[e]s[e] socks k[ee]p my f[ee]t snug.', ok:true},
+  {s:'A g[oa]t can sing a song.', ok:false}
+];
+var BREAKS=['Stand up and row your boat! Pull, pull, pull!','Do 10 jumping jacks!','Swim with your arms like a fish!',
+ 'Stretch up tall like a mast, then touch your toes.','March in place and count to 20.','Take 3 big ocean breaths. In... and out.','Wiggle like a wave until the timer ends!'];
+var ROUNDS=12;
+
+/* ---------- helpers ---------- */
+function $(id){return document.getElementById(id)}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a}
+function mk(t){return t.replace(/\[([^\]]+)\]/g,'<span class="u">$1</span>')}
+function plain(t){return t.replace(/[\[\]]/g,'')}
+function speak(t){try{if(!window.speechSynthesis)return;speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(t);u.rate=.8;speechSynthesis.speak(u)}catch(e){}}
+function show(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});$(id).classList.add('active');window.scrollTo(0,0)}
+var sounds=false;
+try{sounds=localStorage.getItem('ftb_sounds')==='1'}catch(e){}
+function applySounds(){document.body.classList.toggle('showsounds',sounds);$('soundsBtn').classList.toggle('on',sounds);$('soundsBtn').textContent=sounds?'Hide sounds':'Show sounds'}
+function toggleSounds(){sounds=!sounds;try{localStorage.setItem('ftb_sounds',sounds?'1':'0')}catch(e){}applySounds()}
+applySounds();
+function burst(el){
+  var r=el.getBoundingClientRect(),em=['⭐','💦','🌊','✨'];
+  for(var i=0;i<10;i++){var p=document.createElement('div');p.className='pop';p.textContent=em[i%em.length];
+    p.style.left=(r.left+r.width/2)+'px';p.style.top=(r.top+r.height/2)+'px';
+    p.style.setProperty('--dx',(Math.random()*240-120)+'px');p.style.setProperty('--dy',(Math.random()*-200-40)+'px');
+    document.body.appendChild(p);setTimeout(function(x){return function(){x.remove()}}(p),1000)}
+}
+
+/* ---------- game ---------- */
+var G={};
+function startGame(){
+  var f=shuffle(FILL).slice(0,ROUNDS/2).map(function(x){return {type:'fill',d:x}});
+  var s=shuffle(SILLY).slice(0,ROUNDS/2).map(function(x){return {type:'silly',d:x}});
+  var items=[];for(var i=0;i<ROUNDS/2;i++){items.push(f[i]);items.push(s[i])}
+  G={items:items,i:0,score:0,streak:0,clean:0,missed:false,locked:false,breakDone:false};
+  show('game');render();
+}
+function toMenu(){try{speechSynthesis.cancel()}catch(e){}show('menu')}
+function hud(){
+  $('score').textContent=G.score;$('streak').textContent=G.streak;
+  var pct=G.i/G.items.length;$('boat').style.left='calc('+(pct*82)+'% + 4px)';
+}
+function render(){
+  G.missed=false;G.locked=false;$('fb').textContent='';$('fb').className='fb';$('nextBtn').style.display='none';hud();
+  var it=G.items[G.i],h;
+  if(it.type==='fill'){
+    G.order=shuffle([0,1,2]);
+    h='<div class="center"><span class="tag">&#9999;&#65039; Fill the Gap</span></div>'+
+      '<div class="sent">'+mk(it.d.s).replace('___','<span class="blank" id="blank">&nbsp;</span>')+'</div>'+
+      '<div class="center"><button class="btn small" onclick="hear()">&#128266; Hear it</button></div><div class="choices">';
+    G.order.forEach(function(ci,k){h+='<button class="choice" id="c'+k+'" onclick="pickFill('+k+')">'+mk(it.d.c[ci])+'</button>'});
+    h+='</div>';
+  }else{
+    h='<div class="center"><span class="tag">&#129315; Silly or Makes Sense?</span></div>'+
+      '<div class="sent">'+mk(it.d.s)+'</div>'+
+      '<div class="center"><button class="btn small" onclick="hear()">&#128266; Hear it</button></div>'+
+      '<div class="choices two"><button class="choice" id="c0" onclick="pickSilly(0)">&#129315; Silly</button>'+
+      '<button class="choice" id="c1" onclick="pickSilly(1)">&#128077; Makes Sense</button></div>';
+  }
+  $('stage').innerHTML=h;
+}
+function hear(){var it=G.items[G.i];speak(plain(it.d.s).replace('___','blank'))}
+function win(btn,msg){
+  G.locked=true;btn.classList.add('right');
+  G.streak++;G.score+=10+(G.missed?0:5)+Math.min(G.streak,5);if(!G.missed)G.clean++;
+  document.querySelectorAll('.choice').forEach(function(b){b.disabled=true});
+  $('fb').className='fb good';$('fb').innerHTML=msg;burst(btn);
+  G.i++;hud();G.i--;
+  $('nextBtn').style.display='inline-block';
+}
+function lose(btn,msg){
+  btn.classList.add('wrong');btn.disabled=true;G.missed=true;G.streak=0;hud();
+  $('fb').className='fb bad';$('fb').textContent=msg;
+}
+function pickFill(k){
+  if(G.locked)return;var it=G.items[G.i],ci=G.order[k],btn=$('c'+k);
+  if(ci===0){
+    $('blank').innerHTML=mk(it.d.c[0]);
+    win(btn,(G.missed?'You got it!':'Yes! First try!')+'<div class="readit">&#128483;&#65039; Now read the whole sentence out loud.</div>');
+  }else lose(btn,'Hmm, does "'+plain(it.d.c[ci])+'" make sense there? Read it again and try another word.');
+}
+function pickSilly(k){
+  if(G.locked)return;var it=G.items[G.i],btn=$('c'+k),saidOk=(k===1);
+  if(saidOk===it.d.ok){
+    win(btn,(it.d.ok?'Right! That could really happen.':'Ha! That is SO silly!')+'<div class="readit">&#128483;&#65039; Read it one more time, nice and smooth.</div>');
+  }else lose(btn,'Read it again slowly. Could that really happen?');
+}
+function next(){
+  G.i++;
+  if(G.i>=G.items.length){finish();return}
+  if(G.i===G.items.length/2&&!G.breakDone){G.breakDone=true;startBreak();return}
+  render();
+}
+/* brain break */
+var bt=null;
+function startBreak(){
+  $('brkText').textContent=BREAKS[Math.floor(Math.random()*BREAKS.length)];
+  var n=20;$('brkTimer').textContent=n;$('brk').classList.add('active');clearInterval(bt);
+  bt=setInterval(function(){n--;$('brkTimer').textContent=Math.max(n,0);if(n<=0)clearInterval(bt)},1000);
+}
+function endBreak(){clearInterval(bt);$('brk').classList.remove('active');render()}
+/* end */
+function finish(){
+  var pct=G.clean/G.items.length,n=pct>=.9?3:pct>=.6?2:1,s='';
+  for(var i=0;i<3;i++)s+=i<n?'⭐':'☆';
+  $('endStars').textContent=s;
+  $('endMsg').textContent='Score: '+G.score+' • First-try answers: '+G.clean+' of '+G.items.length;
+  show('end');
+}
+</script>
+</body>
+</html>
